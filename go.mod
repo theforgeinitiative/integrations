@@ -48,6 +48,7 @@ require (
 	github.com/gorilla/sessions v1.2.1
 	github.com/labstack/echo-contrib v0.15.0
 	github.com/labstack/echo/v4 v4.11.1
+	github.com/mrz1836/go-sanitize v1.3.1
 	github.com/pkg/errors v0.9.1 // indirect
 	go.step.sm/crypto v0.35.0
 )

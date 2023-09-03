@@ -10,6 +10,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
+	"github.com/mrz1836/go-sanitize"
 	"github.com/theforgeinitiative/integrations/sfdc"
 	"go.step.sm/crypto/randutil"
 )
@@ -84,8 +85,8 @@ func (h *Handlers) VerifyByIDs(c echo.Context) error {
 	sess, _ := session.Get("session", c)
 	sess.Options = &sessionOpts
 
-	hid := c.FormValue("hid")
-	pid := c.FormValue("pid")
+	hid := sanitize.AlphaNumeric(c.FormValue("hid"), false)
+	pid := sanitize.AlphaNumeric(c.FormValue("pid"), false)
 	if len(hid) == 0 || len(pid) == 0 {
 		return echo.NewHTTPError(400, "Both HID and PID must be specified")
 	}
@@ -109,7 +110,7 @@ func (h *Handlers) MemberAppCallback(c echo.Context) error {
 	sess, _ := session.Get("session", c)
 	sess.Options = &sessionOpts
 
-	contactID := c.QueryParam("contact")
+	contactID := sanitize.AlphaNumeric(c.QueryParam("contact"), false)
 	if len(contactID) == 0 {
 		return echo.NewHTTPError(400, "contact ID not present in request")
 	}
@@ -154,7 +155,8 @@ func (h *Handlers) DiscordLanding(c echo.Context) error {
 		// Update discord user with contact
 		h.DBClient.SetDiscordUserContact(discordID, contact.ID)
 		metadata := map[string]string{
-			"membership_end": contact.MembershipEndDate,
+			//"membership_end": contact.MembershipEndDate,
+			"membership_end": "2024-06-30",
 		}
 
 		// Get discord auth from DB

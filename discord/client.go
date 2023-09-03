@@ -21,10 +21,10 @@ type Client struct {
 func (c *Client) RegisterMetadata() error {
 	_, err := c.BotSession.ApplicationRoleConnectionMetadataUpdate(c.OAuthConfig.ClientID, []*discordgo.ApplicationRoleConnectionMetadata{
 		{
-			Type:        discordgo.ApplicationRoleConnectionMetadataDatetimeGreaterThanOrEqual,
+			Type:        discordgo.ApplicationRoleConnectionMetadataDatetimeLessThanOrEqual,
 			Key:         "membership_end",
-			Name:        "Member Until",
-			Description: "Membership end date",
+			Name:        "Membership End Date",
+			Description: "Days until end of membership",
 		},
 	})
 	if err != nil {
