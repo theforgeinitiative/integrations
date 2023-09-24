@@ -1,2 +1,5 @@
 env.sh
 .DS_Store
+forgebot
+config/config.yml
+config/config.yml.sandbox

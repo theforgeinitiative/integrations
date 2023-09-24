@@ -1,73 +1,107 @@
 package discord
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
-	"golang.org/x/oauth2"
 )
 
-type TokenStore interface {
-	SetDiscordUserAuth(userID string, refreshToken string) error
-}
-
 type Client struct {
-	BotSession  *discordgo.Session
-	OAuthConfig *oauth2.Config
-	Store       TokenStore
+	BotSession *discordgo.Session
+	Guilds     map[string]Guild
 }
 
-func (c *Client) RegisterMetadata() error {
-	_, err := c.BotSession.ApplicationRoleConnectionMetadataUpdate(c.OAuthConfig.ClientID, []*discordgo.ApplicationRoleConnectionMetadata{
-		{
-			Type:        discordgo.ApplicationRoleConnectionMetadataDatetimeLessThanOrEqual,
-			Key:         "membership_end",
-			Name:        "Membership End Date",
-			Description: "Days until end of membership",
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to register Discord role connection metadata: %w", err)
+type Guild struct {
+	ID               string `mapstructure:"id"`
+	MemberRoleID     string `mapstructure:"memberRole"`
+	WelcomeChannelID string `mapstructure:"welcomeChannel"`
+}
+
+type Member struct {
+	ID         string
+	ServerNick string
+	Username   string
+	GlobalName string
+	GuildID    string
+	Roles      []string
+}
+
+func (m Member) Nick() string {
+	if len(m.ServerNick) > 0 {
+		return m.ServerNick
 	}
+	if len(m.GlobalName) > 0 {
+		return m.GlobalName
+	}
+	return m.Username
+}
+
+func NewClient(token string) (*Client, error) {
+	discordBot, err := discordgo.New("Bot " + token)
+	return &Client{
+		BotSession: discordBot,
+	}, err
+}
+
+func (c *Client) GuildMembers() (map[string]map[string]Member, error) {
+	members := make(map[string]map[string]Member)
+	for name, guild := range c.Guilds {
+		members[name] = make(map[string]Member)
+		// TODO: actually paginate this if we have over 1000 members
+		guildMembers, err := c.BotSession.GuildMembers(guild.ID, "", 1000)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get guild members for %s: %s", name, err)
+		}
+		for _, gm := range guildMembers {
+			members[name][gm.User.ID] = Member{
+				ID:         gm.User.ID,
+				ServerNick: gm.Nick,
+				Username:   gm.User.Username,
+				GlobalName: gm.User.GlobalName,
+				GuildID:    gm.GuildID,
+				Roles:      gm.Roles,
+			}
+		}
+	}
+
+	return members, nil
+}
+
+func (c *Client) AddMemberRole(userID, guildName string) error {
+	guild, ok := c.Guilds[guildName]
+	if !ok {
+		return fmt.Errorf("guild name %s not configured", guildName)
+	}
+	err := c.BotSession.GuildMemberRoleAdd(guild.ID, userID, guild.MemberRoleID)
+	if err != nil {
+		return fmt.Errorf("failed to add user %s to guild %s member role: %w", userID, guildName, err)
+	}
+
 	return nil
 }
 
-func (c *Client) UpdateMetadata(refreshTokens map[string]string, metadata map[string]string) error {
-	for id, refresh := range refreshTokens {
-		accessToken, err := c.getAccessToken(id, refresh)
-		if err != nil {
-			return err
-		}
-		ts, _ := discordgo.New("Bearer " + accessToken)
-		_, err = ts.UserApplicationRoleConnectionUpdate(c.OAuthConfig.ClientID, &discordgo.ApplicationRoleConnection{
-			PlatformName:     "The Forge Initiative",
-			PlatformUsername: "TFI Member Bot",
-			Metadata:         metadata,
-		})
-		if err != nil {
-			return err
-		}
+func (c *Client) RemoveMemberRole(userID, guildName string) error {
+	guild, ok := c.Guilds[guildName]
+	if !ok {
+		return fmt.Errorf("guild name %s not configured", guildName)
 	}
+	err := c.BotSession.GuildMemberRoleRemove(guild.ID, userID, guild.MemberRoleID)
+	if err != nil {
+		return fmt.Errorf("failed to remove user %s from guild %s member role: %w", userID, guildName, err)
+	}
+
 	return nil
 }
 
-func (c *Client) getAccessToken(id string, refreshToken string) (string, error) {
-	restoredToken := &oauth2.Token{
-		RefreshToken: refreshToken,
-		TokenType:    "Bearer",
+func (c *Client) HasMemberRole(member Member, guildName string) bool {
+	guild, ok := c.Guilds[guildName]
+	if !ok {
+		return false
 	}
-	ts := c.OAuthConfig.TokenSource(context.Background(), restoredToken)
-	token, err := ts.Token()
-	if err != nil {
-		return "", fmt.Errorf("failed to refresh token: %w", err)
+	for _, r := range member.Roles {
+		if r == guild.MemberRoleID {
+			return true
+		}
 	}
-
-	// save new refresh token
-	err = c.Store.SetDiscordUserAuth(id, token.RefreshToken)
-	if err != nil {
-		return "", fmt.Errorf("failed to store refresh token in DB: %w", err)
-	}
-
-	return token.AccessToken, nil
+	return false
 }
