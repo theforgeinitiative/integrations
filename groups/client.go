@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	admin "google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/option"
 )
 
 type Client struct {
@@ -13,7 +14,7 @@ type Client struct {
 }
 
 func NewClient(group string) (Client, error) {
-	adminSvc, err := admin.NewService(context.TODO())
+	adminSvc, err := admin.NewService(context.TODO(), option.WithScopes("https://www.googleapis.com/auth/admin.directory.group.member"))
 	if err != nil {
 		return Client{}, fmt.Errorf("failed to create admin service: %w", err)
 	}
