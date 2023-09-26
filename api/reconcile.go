@@ -54,7 +54,7 @@ func (h *Handlers) Reconcile(c echo.Context) error {
 	// get all members of Google Group
 	emailList, err := h.GroupsClient.ListMembers()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve group members", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to retrieve group members").WithInternal(err)
 	}
 	emails := groupEmailMap(emailList)
 
