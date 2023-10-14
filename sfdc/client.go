@@ -9,9 +9,8 @@ import (
 	"github.com/simpleforce/simpleforce"
 )
 
-// Eventually make this configurable/dynamic
-const MembershipYearStart = "2023-07-01"
-const MembershipYearStartGrace = "2022-07-01"
+// 100 day grace period
+const MembershipGracePeriod = 100 * (24 * time.Hour)
 
 const DateFormat = "2006-01-02"
 
@@ -59,6 +58,11 @@ type Contact struct {
 	DiscordID         string
 }
 
+func (c Contact) CurrentMember() bool {
+	endDate, _ := time.Parse(DateFormat, c.MembershipEndDate)
+	return endDate.After(time.Now())
+}
+
 func init() {
 	gob.Register(Contact{})
 }
@@ -92,8 +96,9 @@ func (c *Client) FindContactByIDs(hid, pid string) (Contact, error) {
 }
 
 func (c *Client) FindCurrentMembers() ([]Contact, error) {
+	endDate := time.Now().Add(MembershipGracePeriod).Format(DateFormat)
 	where := fmt.Sprintf(`npo02__MembershipEndDate__c > %s
-        AND ( NOT Name LIKE '%%test%%' )`, MembershipYearStartGrace)
+        AND ( NOT Name LIKE '%%test%%' )`, endDate)
 	return c.queryContacts(where)
 }
 
