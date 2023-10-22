@@ -22,9 +22,15 @@ func (h *Handlers) Reconcile(c echo.Context) error {
 		}
 	}
 
+	var user string
+	if u := c.Get("authorized_user"); u != nil {
+		user = u.(string)
+	}
+
 	report := reconcile.Report{
 		Date:      time.Now(),
 		CheckMeIn: true,
+		User:      user,
 		Discord:   make(map[string]reconcile.Changes),
 		Groups:    make(map[string]reconcile.Changes),
 	}

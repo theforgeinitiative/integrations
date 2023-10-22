@@ -15,6 +15,7 @@ var reportTemplate = template.Must(template.New("report").Parse(reportTemplateTe
 type Report struct {
 	Date      time.Time          `json:"executionDate"`
 	Duration  time.Duration      `json:"executionDuration"`
+	User      string             `json:"user"`
 	CheckMeIn bool               `json:"checkmein"`
 	Discord   map[string]Changes `json:"discord"`
 	Groups    map[string]Changes `json:"groups"`

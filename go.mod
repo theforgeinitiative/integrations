@@ -55,11 +55,13 @@ require (
 	google.golang.org/grpc v1.57.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
+	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
 	cloud.google.com/go/firestore v1.12.0
+	github.com/auth0/go-jwt-middleware/v2 v2.1.0
 	github.com/bwmarrin/discordgo v0.27.2-0.20230907125633-a2079d3138d2
 	github.com/gocarina/gocsv v0.0.0-20230616125104-99d496ca653d
 	github.com/gorilla/sessions v1.2.1

@@ -28,6 +28,14 @@ func main() {
 		e.Logger.Fatalf("Failed to load config: %s", err)
 	}
 
+	if viper.GetBool("auth.enabled") {
+		authMW, err := api.NewAuthMiddleware(viper.GetString("auth.oauthIssuer"), viper.GetString("auth.audience"), viper.GetStringSlice("auth.gcpPrincipals"))
+		if err != nil {
+			e.Logger.Fatalf("Failed to initialize auth middleware: %s", err)
+		}
+		e.Use(authMW.Require)
+	}
+
 	// setup SFDC connection
 	sfClient, err := sfdc.NewClient(viper.GetString("sfdc.url"), viper.GetString("sfdc.clientId"), viper.GetString("sfdc.clientSecret"))
 	if err != nil {
