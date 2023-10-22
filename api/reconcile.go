@@ -164,8 +164,8 @@ func (h *Handlers) Reconcile(c echo.Context) error {
 	// set duration
 	report.Duration = time.Since(report.Date)
 
-	// SEND REPORT
-	if !dryRun {
+	// send report if changes were made
+	if !dryRun && report.HasChanges() {
 		err = h.EmailClient.SendReconcileReport(report)
 		if err != nil {
 			c.Logger().Warnf("Failed to send reconciliation report: %s", err)

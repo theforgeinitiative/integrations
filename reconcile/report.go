@@ -38,3 +38,22 @@ func (r Report) RenderText() ([]byte, error) {
 	err := reportTemplate.Execute(&cache, r)
 	return cache.Bytes(), err
 }
+
+func (r Report) HasChanges() bool {
+	// send report if CheckMeIn failed
+	if !r.CheckMeIn {
+		return true
+	}
+	for _, d := range r.Discord {
+		if len(d.Additions) > 0 || len(d.Deletions) > 0 || len(d.Errored) > 0 {
+			return true
+		}
+	}
+	for _, d := range r.Groups {
+		if len(d.Additions) > 0 || len(d.Deletions) > 0 || len(d.Errored) > 0 {
+			return true
+		}
+	}
+
+	return false
+}
