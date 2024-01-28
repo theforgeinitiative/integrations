@@ -66,7 +66,7 @@ func (b *Bot) linkMembershipHadler(s *discordgo.Session, i *discordgo.Interactio
 
 	// Set role
 	for gName, guild := range b.Guilds {
-		err := s.GuildMemberRoleAdd(i.GuildID, i.Member.User.ID, guild.MemberRoleID)
+		err := s.GuildMemberRoleAdd(guild.ID, i.Member.User.ID, guild.MemberRoleID)
 		restErr, ok := err.(*discordgo.RESTError)
 		// skip this guild if member isn't part of it
 		if ok && restErr.Message.Code == unknownMemberErrorCode {
