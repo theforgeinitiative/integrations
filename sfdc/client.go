@@ -96,7 +96,7 @@ func (c *Client) FindContactByIDs(hid, pid string) (Contact, error) {
 }
 
 func (c *Client) FindCurrentMembers() ([]Contact, error) {
-	endDate := time.Now().Add(MembershipGracePeriod).Format(DateFormat)
+	endDate := time.Now().Add(-MembershipGracePeriod).Format(DateFormat)
 	where := fmt.Sprintf(`npo02__MembershipEndDate__c > %s
         AND ( NOT Name LIKE '%%test%%' )`, endDate)
 	return c.queryContacts(where)
