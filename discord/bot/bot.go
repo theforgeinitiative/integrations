@@ -5,14 +5,21 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/theforgeinitiative/integrations/discord"
+	"github.com/theforgeinitiative/integrations/groups"
+	"github.com/theforgeinitiative/integrations/igloohome"
 	"github.com/theforgeinitiative/integrations/sfdc"
+	"github.com/theforgeinitiative/integrations/sheetlog"
 )
 
 type Bot struct {
-	Session  *discordgo.Session
-	SFClient *sfdc.Client
-	ID       string
-	Guilds   map[string]discord.Guild
+	Session         *discordgo.Session
+	SFClient        *sfdc.Client
+	GroupClient     *groups.Client
+	ID              string
+	Guilds          map[string]discord.Guild
+	Campaigns       map[string]string
+	IglooHomeClient *igloohome.Client
+	SheetLog        *sheetlog.Client
 }
 
 const unknownMemberErrorCode = 10007
@@ -21,6 +28,14 @@ var commands = []discordgo.ApplicationCommand{
 	{
 		Name:        "link-membership",
 		Description: "Link your user to your TFI membership",
+	},
+	{
+		Name:        "join-future-forge",
+		Description: "Join the Future Forge Google Group",
+	},
+	{
+		Name:        "unlock-storage",
+		Description: "Generates a one-time unlock code for our storage unit",
 	},
 	{
 		Name:        "welcome",
