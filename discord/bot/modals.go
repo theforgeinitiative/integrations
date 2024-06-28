@@ -91,3 +91,48 @@ func (b *Bot) linkMembershipHadler(s *discordgo.Session, i *discordgo.Interactio
 	}
 	return nil
 }
+
+func (b *Bot) addFutureForgeHandler(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Adding you to the group... :thinking:",
+			Flags:   discordgo.MessageFlagsEphemeral,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// lookup by HID and PID
+	data := i.ModalSubmitData()
+	email := data.Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
+	_, err = b.GroupClient.LookupMember(email)
+	if err == nil {
+		s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+			Content: "Nothing to do here! You're already a part of the group. :sunglasses:",
+			Flags:   discordgo.MessageFlagsEphemeral,
+		})
+		return nil
+	}
+
+	// Add member
+	err = b.GroupClient.AddMember(email)
+	if err != nil {
+		s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+			Content: "I encountered an error trying to add you to the group. Please try again.",
+			Flags:   discordgo.MessageFlagsEphemeral,
+		})
+		return fmt.Errorf("failed to add group member for %s with email %s: %s", memberDisplayName(i.Member), email, err)
+	}
+	log.Printf("Successfully added group member for %s with email %s", memberDisplayName(i.Member), email)
+
+	_, err = s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+		Content: ":tada: You're all set! You should have access to the shared drive momentarily.",
+		Flags:   discordgo.MessageFlagsEphemeral,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to send success response: %s", err)
+	}
+	return nil
+}

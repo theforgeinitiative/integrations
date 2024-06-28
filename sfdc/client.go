@@ -46,6 +46,7 @@ func (c *Client) Authenticate() error {
 
 type Contact struct {
 	ID                string
+	AccountID         string
 	Barcode           string
 	DisplayName       string
 	FirstName         string
@@ -114,6 +115,26 @@ func (c *Client) GetContactByDiscordID(discordID string) (Contact, error) {
 	return contacts[0], nil
 }
 
+func (c *Client) GetCampaignMembershipStatus(contactId, campaignId string) (string, error) {
+	q := fmt.Sprintf(`
+	SELECT
+		Status
+	FROM
+		CampaignMember
+	WHERE
+		CampaignId = '%s' AND ContactId = '%s'
+	`, campaignId, contactId)
+
+	result, err := c.SFClient.Query(q)
+	if err != nil {
+		return "", fmt.Errorf("error running SOQL query: %s", err)
+	}
+	if len(result.Records) == 0 {
+		return "", nil
+	}
+	return result.Records[0].StringField("Status"), nil
+}
+
 func (c *Client) SetDiscordID(contactID, discordID string) error {
 	if c.lastAuthenticated.Add(authSessionLength).Before(time.Now()) {
 		c.Authenticate()
@@ -138,6 +159,7 @@ func (c *Client) queryContacts(where string) ([]Contact, error) {
 	q := fmt.Sprintf(`
     SELECT
         Id,
+		Account.Id,
 		TFI_Barcode_for_Button__c,
         TFI_Display_Name_for_Button__c,
 		FirstName,
