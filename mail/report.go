@@ -16,3 +16,9 @@ func (c *Client) SendReconcileReport(report reconcile.Report) error {
 	_, err = c.SendgridClient.Send(email)
 	return err
 }
+
+func (c *Client) SendMail(subject, to, body string) error {
+	email := mail.NewSingleEmailPlainText(c.From, subject, mail.NewEmail("", to), body)
+	_, err := c.SendgridClient.Send(email)
+	return err
+}

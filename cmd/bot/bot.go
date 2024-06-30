@@ -11,6 +11,7 @@ import (
 	"github.com/theforgeinitiative/integrations/discord/bot"
 	"github.com/theforgeinitiative/integrations/groups"
 	"github.com/theforgeinitiative/integrations/igloohome"
+	"github.com/theforgeinitiative/integrations/mail"
 	"github.com/theforgeinitiative/integrations/sfdc"
 	"github.com/theforgeinitiative/integrations/sheetlog"
 )
@@ -42,13 +43,20 @@ func main() {
 	}
 
 	// igloohome client
-	ih := igloohome.NewClient(viper.GetString("igloohome.clientId"), viper.GetString("igloohome.clientSecret"), viper.GetString("igloohome.lockId"))
+	ih := igloohome.NewClient(viper.GetString("storage.clientId"), viper.GetString("storage.clientSecret"), viper.GetStringMapString("storage.locks"))
+	ih.ApprovalEmail = viper.GetString("storage.approvalEmail")
+	ih.ApprovalLink = viper.GetString("storage.approvalLink")
+	ih.AdditionalInstructions = viper.GetString("storage.additionalInstructions")
 
 	// Google Sheets log client
-	sl, err := sheetlog.NewClient(viper.GetString("sheetLog.sheetId"), viper.GetString("sheetLog.sheetName"))
+	sl, err := sheetlog.NewClient(viper.GetString("storage.log.sheetId"), viper.GetString("storage.log.sheetName"))
 	if err != nil {
 		log.Fatalf("Sheet client err: %s", err)
 	}
+
+	// email client
+	mc := mail.NewClient(viper.GetString("mail.apiKey"), viper.GetString("mail.fromName"), viper.GetString("mail.fromEmail"), viper.GetString("mail.fromEmail"))
+
 	// register handlers/commands
 	botClient := bot.Bot{
 		Session:         sess,
@@ -58,6 +66,7 @@ func main() {
 		Campaigns:       viper.GetStringMapString("sfdc.campaigns"),
 		IglooHomeClient: ih,
 		SheetLog:        &sl,
+		MailClient:      &mc,
 	}
 
 	err = viper.UnmarshalKey("discord.guilds", &botClient.Guilds)

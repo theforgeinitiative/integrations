@@ -115,7 +115,7 @@ func (c *Client) GetContactByDiscordID(discordID string) (Contact, error) {
 	return contacts[0], nil
 }
 
-func (c *Client) GetCampaignMembershipStatus(contactId, campaignId string) (string, error) {
+func (c *Client) GetCampaignMembershipStatus(contactID, campaignID string) (string, error) {
 	q := fmt.Sprintf(`
 	SELECT
 		Status
@@ -123,7 +123,7 @@ func (c *Client) GetCampaignMembershipStatus(contactId, campaignId string) (stri
 		CampaignMember
 	WHERE
 		CampaignId = '%s' AND ContactId = '%s'
-	`, campaignId, contactId)
+	`, campaignID, contactID)
 
 	result, err := c.SFClient.Query(q)
 	if err != nil {
@@ -133,6 +133,17 @@ func (c *Client) GetCampaignMembershipStatus(contactId, campaignId string) (stri
 		return "", nil
 	}
 	return result.Records[0].StringField("Status"), nil
+}
+
+func (c *Client) CreateCampaignMember(contactID, campaignID, status string) *simpleforce.SObject {
+	if c.lastAuthenticated.Add(authSessionLength).Before(time.Now()) {
+		c.Authenticate()
+	}
+	return c.SFClient.SObject("CampaignMember").
+		Set("ContactId", contactID).
+		Set("CampaignId", campaignID).
+		Set("Status", status).
+		Create()
 }
 
 func (c *Client) SetDiscordID(contactID, discordID string) error {

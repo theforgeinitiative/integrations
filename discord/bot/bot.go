@@ -7,6 +7,7 @@ import (
 	"github.com/theforgeinitiative/integrations/discord"
 	"github.com/theforgeinitiative/integrations/groups"
 	"github.com/theforgeinitiative/integrations/igloohome"
+	"github.com/theforgeinitiative/integrations/mail"
 	"github.com/theforgeinitiative/integrations/sfdc"
 	"github.com/theforgeinitiative/integrations/sheetlog"
 )
@@ -20,6 +21,7 @@ type Bot struct {
 	Campaigns       map[string]string
 	IglooHomeClient *igloohome.Client
 	SheetLog        *sheetlog.Client
+	MailClient      *mail.Client
 }
 
 const unknownMemberErrorCode = 10007
@@ -35,7 +37,33 @@ var commands = []discordgo.ApplicationCommand{
 	},
 	{
 		Name:        "unlock-storage",
-		Description: "Generates a one-time unlock code for our storage unit",
+		Description: "Generates a temporary code for a TFI storage unit",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:        "unit",
+				Type:        discordgo.ApplicationCommandOptionType(discordgo.StringSelectMenu),
+				Required:    true,
+				Description: "Which storage unit needs to be unlocked?",
+				Choices: []*discordgo.ApplicationCommandOptionChoice{
+					{
+						Name:  "1501 - Outside",
+						Value: "1501",
+					},
+					{
+						Name:  "2099 - FLL, CCR",
+						Value: "2099",
+					},
+					{
+						Name:  "2116 - Team Building, Tools",
+						Value: "2116",
+					},
+					{
+						Name:  "2166 - Outreach",
+						Value: "2166",
+					},
+				},
+			},
+		},
 	},
 	{
 		Name:        "welcome",

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/theforgeinitiative/integrations/sfdc"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
@@ -26,9 +27,9 @@ func NewClient(id, name string) (Client, error) {
 	return Client{svc: sheetsSvc, SheetID: id, SpreadsheetName: name}, nil
 }
 
-func (c *Client) StorageLog(name string) error {
+func (c *Client) StorageLog(contact sfdc.Contact, lock string) error {
 	row := &sheets.ValueRange{
-		Values: [][]interface{}{{time.Now().Format(logDateFormat), name}},
+		Values: [][]interface{}{{time.Now().Format(logDateFormat), lock, contact.FirstName, contact.LastName, contact.ID}},
 	}
 
 	resp, err := c.svc.Spreadsheets.Values.Append(c.SheetID, c.SpreadsheetName, row).ValueInputOption("USER_ENTERED").InsertDataOption("INSERT_ROWS").Do()

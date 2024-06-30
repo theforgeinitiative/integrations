@@ -14,11 +14,14 @@ import (
 )
 
 type Client struct {
-	HTTPClient    *http.Client
-	StorageLockID string
+	LockIDs                map[string]string
+	ApprovalEmail          string
+	ApprovalLink           string
+	AdditionalInstructions string
 
-	otpVariance    int
-	hourlyVariance int
+	httpClient     *http.Client
+	otpVariance    map[string]int
+	hourlyVariance map[string]int
 }
 
 type OTPRequestBody struct {
@@ -47,7 +50,7 @@ const tokenURL = "https://auth.igloohome.co/oauth2/token"
 const maxOTPVariances = 5
 const maxHourlyVariances = 3
 
-func NewClient(clientID, clientSecret, lockID string) *Client {
+func NewClient(clientID, clientSecret string, locks map[string]string) *Client {
 	cc := clientcredentials.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -55,20 +58,26 @@ func NewClient(clientID, clientSecret, lockID string) *Client {
 		AuthStyle:    oauth2.AuthStyleInHeader,
 	}
 	return &Client{
-		HTTPClient:    cc.Client(context.Background()),
-		StorageLockID: lockID,
+		httpClient:     cc.Client(context.Background()),
+		LockIDs:        locks,
+		hourlyVariance: make(map[string]int),
+		otpVariance:    make(map[string]int),
 	}
 }
 
-func (c *Client) GenerateOTP(name string) (string, error) {
-	url := fmt.Sprintf(otpURLPattern, c.StorageLockID)
+func (c *Client) GenerateOTP(lock, name string) (string, error) {
+	lockID, ok := c.LockIDs[lock]
+	if !ok {
+		return "", fmt.Errorf("no lock ID configured for %s", lock)
+	}
+	url := fmt.Sprintf(otpURLPattern, lockID)
 
 	// API requires minute and second to be truncated to 0
 	now := time.Now()
 	startDate := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
 
 	otpReq := OTPRequestBody{
-		Variance:   c.getOTPVariance(),
+		Variance:   c.getOTPVariance(lockID),
 		StartDate:  startDate.Format(time.RFC3339),
 		AccessName: name,
 	}
@@ -76,16 +85,20 @@ func (c *Client) GenerateOTP(name string) (string, error) {
 	return c.getToken(url, otpReq)
 }
 
-func (c *Client) GenerateHourly(name string, duration time.Duration) (string, time.Time, error) {
-	url := fmt.Sprintf(hourlyURLPattern, c.StorageLockID)
-
+func (c *Client) GenerateHourly(lock, name string, duration time.Duration) (string, time.Time, error) {
 	// API requires minute and second to be truncated to 0
 	now := time.Now()
 	startDate := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
 	endDate := startDate.Add(duration)
 
+	lockID, ok := c.LockIDs[lock]
+	if !ok {
+		return "", endDate, fmt.Errorf("no lock ID configured for %s", lock)
+	}
+	url := fmt.Sprintf(hourlyURLPattern, lockID)
+
 	otpReq := HourlyRequestBody{
-		Variance:   c.getHourlyVariance(),
+		Variance:   c.getHourlyVariance(lockID),
 		StartDate:  startDate.Format(time.RFC3339),
 		EndDate:    endDate.Format(time.RFC3339),
 		AccessName: name,
@@ -103,7 +116,7 @@ func (c *Client) getToken(url string, body any) (string, error) {
 
 	fmt.Printf("%s", reqBody)
 
-	resp, err := c.HTTPClient.Post(url, "application/json", bytes.NewBuffer(reqBody))
+	resp, err := c.httpClient.Post(url, "application/json", bytes.NewBuffer(reqBody))
 	if err != nil {
 		return "", fmt.Errorf("failed to request token: %w", err)
 	}
@@ -127,18 +140,24 @@ func (c *Client) getToken(url string, body any) (string, error) {
 	return token.PIN, nil
 }
 
-func (c *Client) getOTPVariance() int {
-	c.otpVariance++
-	if c.otpVariance > maxOTPVariances {
-		c.otpVariance = 1
+func (c *Client) getOTPVariance(lock string) int {
+	if _, ok := c.otpVariance[lock]; !ok {
+		c.otpVariance[lock] = 0
 	}
-	return c.otpVariance
+	c.otpVariance[lock]++
+	if c.otpVariance[lock] > maxOTPVariances {
+		c.otpVariance[lock] = 1
+	}
+	return c.otpVariance[lock]
 }
 
-func (c *Client) getHourlyVariance() int {
-	c.hourlyVariance++
-	if c.hourlyVariance > maxHourlyVariances {
-		c.hourlyVariance = 1
+func (c *Client) getHourlyVariance(lock string) int {
+	if _, ok := c.hourlyVariance[lock]; !ok {
+		c.hourlyVariance[lock] = 0
 	}
-	return c.hourlyVariance
+	c.hourlyVariance[lock]++
+	if c.hourlyVariance[lock] > maxHourlyVariances {
+		c.hourlyVariance[lock] = 1
+	}
+	return c.hourlyVariance[lock]
 }
