@@ -173,7 +173,7 @@ func (b *Bot) unlockStorageHandler(s *discordgo.Session, i *discordgo.Interactio
 	if err != nil {
 		log.Printf("Failed to lookup member when unlocking storage: %s", err)
 		s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
-			Content: ":woozy_face: Oof! We encountered a problem generating an unlock code. Please try again and ask for help if you're stuck.",
+			Content: ":woozy_face: Oof! We encountered a problem generating an unlock code. Please ensure you've linked your membership to your Discord account and try again.",
 			Flags:   discordgo.MessageFlagsEphemeral,
 		})
 		return
@@ -247,7 +247,7 @@ func (b *Bot) unlockStorageHandler(s *discordgo.Session, i *discordgo.Interactio
 	}
 
 	// Send the user a DM with code
-	err = b.sendDM(uid, fmt.Sprintf(":unlock: You're in!\n\nEnter code `%s` to unlock **unit %s**.\n\nThis code is valid until **%s**\n\n%s", code, lock, endDate.Format(time.Kitchen), b.IglooHomeClient.AdditionalInstructions))
+	err = b.sendDM(uid, fmt.Sprintf(":unlock: You're in!\n\nEnter code `%s` followed by the :unlock: button to open **unit %s**.\n\nThis code is valid until **%s**\n\n%s", code, lock, endDate.Format(time.Kitchen), b.IglooHomeClient.AdditionalInstructions))
 	if err != nil {
 		log.Printf("Failed to DM lock code: %s", err)
 		s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
