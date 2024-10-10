@@ -10,7 +10,7 @@ import (
 )
 
 // 100 day grace period
-const MembershipGracePeriod = 100 * (24 * time.Hour)
+const MembershipGracePeriod = 180 * (24 * time.Hour)
 
 const DateFormat = "2006-01-02"
 
