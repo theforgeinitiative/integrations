@@ -50,15 +50,23 @@ var commands = []discordgo.ApplicationCommand{
 						Value: "1501",
 					},
 					{
-						Name:  "2099 - FLL, CCR",
+						Name:  "2091 - CNC and things",
+						Value: "2091",
+					},
+					{
+						Name:  "2099 - FTC, FLL, CCR",
 						Value: "2099",
+					},
+					{
+						Name:  "2100 - To Be Determined",
+						Value: "2100",
 					},
 					{
 						Name:  "2116 - Team Building, Tools",
 						Value: "2116",
 					},
 					{
-						Name:  "2166 - Outreach",
+						Name:  "2166 - Outreach, PyroTech",
 						Value: "2166",
 					},
 				},
