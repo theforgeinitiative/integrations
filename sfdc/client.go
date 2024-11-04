@@ -57,11 +57,11 @@ type Contact struct {
 	GroupEmail        string
 	GroupEmailAlt     string
 	DiscordID         string
+	MembershipStatus  string
 }
 
 func (c Contact) CurrentMember() bool {
-	endDate, _ := time.Parse(DateFormat, c.MembershipEndDate)
-	return endDate.After(time.Now())
+	return c.MembershipStatus == "Current" || c.MembershipStatus == "Grace Period"
 }
 
 func init() {
@@ -97,9 +97,8 @@ func (c *Client) FindContactByIDs(hid, pid string) (Contact, error) {
 }
 
 func (c *Client) FindCurrentMembers() ([]Contact, error) {
-	endDate := time.Now().Add(-MembershipGracePeriod).Format(DateFormat)
-	where := fmt.Sprintf(`npo02__MembershipEndDate__c > %s
-        AND ( NOT Name LIKE '%%test%%' )`, endDate)
+	where := `Account.npsp__Membership_Status__c IN ('Current', 'Grace Period')
+        AND ( NOT Name LIKE '%%test%%' )`
 	return c.queryContacts(where)
 }
 
@@ -180,7 +179,8 @@ func (c *Client) queryContacts(where string) ([]Contact, error) {
 		Email,
 		Google_group__c,
 		Google_group_email_2ndary__c,
-		Discord_ID__c
+		Discord_ID__c,
+		Account.npsp__Membership_Status__c
     FROM
         Contact 
 	WHERE
@@ -210,5 +210,6 @@ func contactFromSObj(obj simpleforce.SObject) Contact {
 		GroupEmail:        obj.StringField("Google_group__c"),
 		GroupEmailAlt:     obj.StringField("Google_group_email_2ndary__c"),
 		DiscordID:         obj.StringField("Discord_ID__c"),
+		MembershipStatus:  obj.StringField("Account.npsp__Membership_Status__c"),
 	}
 }
