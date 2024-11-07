@@ -178,6 +178,16 @@ func (b *Bot) unlockStorageHandler(s *discordgo.Session, i *discordgo.Interactio
 		})
 		return
 	}
+
+	if !contact.CurrentMember() {
+		log.Printf("%s tried to unlock storage, but was not a current member", contact.DisplayName)
+		s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+			Content: ":customs: You must be a current member to access TFI storage.",
+			Flags:   discordgo.MessageFlagsEphemeral,
+		})
+		return
+	}
+
 	status, err := b.SFClient.GetCampaignMembershipStatus(contact.ID, b.Campaigns["storage"])
 	if err != nil {
 		log.Printf("Failed to retrieve campaign membership status: %s", err)
