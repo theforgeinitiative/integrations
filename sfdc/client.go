@@ -210,6 +210,6 @@ func contactFromSObj(obj simpleforce.SObject) Contact {
 		GroupEmail:        obj.StringField("Google_group__c"),
 		GroupEmailAlt:     obj.StringField("Google_group_email_2ndary__c"),
 		DiscordID:         obj.StringField("Discord_ID__c"),
-		MembershipStatus:  obj.StringField("Account.npsp__Membership_Status__c"),
+		MembershipStatus:  obj.SObjectField("Account", "Account").StringField("npsp__Membership_Status__c"),
 	}
 }
