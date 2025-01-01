@@ -32,10 +32,6 @@ var commands = []discordgo.ApplicationCommand{
 		Description: "Link your user to your TFI membership",
 	},
 	{
-		Name:        "join-future-forge",
-		Description: "Join the Future Forge Google Group",
-	},
-	{
 		Name:        "unlock-storage",
 		Description: "Generates a temporary code for a TFI storage unit",
 		Options: []*discordgo.ApplicationCommandOption{
@@ -46,8 +42,8 @@ var commands = []discordgo.ApplicationCommand{
 				Description: "Which storage unit needs to be unlocked?",
 				Choices: []*discordgo.ApplicationCommandOptionChoice{
 					{
-						Name:  "1501 - Outside",
-						Value: "1501",
+						Name:  "1506 - Outside",
+						Value: "1506",
 					},
 					{
 						Name:  "2091 - CNC and things",

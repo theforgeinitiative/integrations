@@ -11,13 +11,6 @@ import (
 func (b *Bot) interactionHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
-		if i.ApplicationCommandData().Name == "join-future-forge" {
-			err := s.InteractionRespond(i.Interaction, b.joinFutureCommandHandler(s, i))
-			if err != nil {
-				panic(err)
-			}
-			return
-		}
 		if i.ApplicationCommandData().Name == "unlock-storage" {
 			b.unlockStorageHandler(s, i)
 			return
@@ -40,8 +33,6 @@ func (b *Bot) interactionHandler(s *discordgo.Session, i *discordgo.InteractionC
 		switch i.ModalSubmitData().CustomID {
 		case "link_membership_form":
 			err = b.linkMembershipHadler(s, i)
-		case "join_future_form":
-			err = b.addFutureForgeHandler(s, i)
 		}
 		if err != nil {
 			log.Printf("Failed to handle modal response for %s: %s", i.ModalSubmitData().CustomID, err)
@@ -124,35 +115,6 @@ func memberAddDisplayName(m *discordgo.GuildMemberAdd) string {
 		return m.User.GlobalName
 	}
 	return m.User.Username
-}
-
-func (b *Bot) joinFutureCommandHandler(_ *discordgo.Session, i *discordgo.InteractionCreate) *discordgo.InteractionResponse {
-	contact, err := b.SFClient.GetContactByDiscordID(i.Member.User.ID)
-	var email string
-	if err == nil {
-		email = contact.GroupEmail
-	}
-	return &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseModal,
-		Data: &discordgo.InteractionResponseData{
-			CustomID: "join_future_form",
-			Title:    "Join the Future Forge group",
-			Components: []discordgo.MessageComponent{
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.TextInput{
-							CustomID:    "email",
-							Label:       "Email Address (GMail/Google Account)",
-							Style:       discordgo.TextInputShort,
-							Placeholder: "somebody@gmail.com",
-							Required:    true,
-							Value:       email,
-						},
-					},
-				},
-			},
-		},
-	}
 }
 
 func (b *Bot) unlockStorageHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
