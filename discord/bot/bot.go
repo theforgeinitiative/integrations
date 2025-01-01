@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -30,44 +31,6 @@ var commands = []discordgo.ApplicationCommand{
 	{
 		Name:        "link-membership",
 		Description: "Link your user to your TFI membership",
-	},
-	{
-		Name:        "unlock-storage",
-		Description: "Generates a temporary code for a TFI storage unit",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Name:        "unit",
-				Type:        discordgo.ApplicationCommandOptionType(discordgo.StringSelectMenu),
-				Required:    true,
-				Description: "Which storage unit needs to be unlocked?",
-				Choices: []*discordgo.ApplicationCommandOptionChoice{
-					{
-						Name:  "1506 - Outside",
-						Value: "1506",
-					},
-					{
-						Name:  "2091 - CNC and things",
-						Value: "2091",
-					},
-					{
-						Name:  "2099 - FTC, FLL, CCR",
-						Value: "2099",
-					},
-					{
-						Name:  "2100 - To Be Determined",
-						Value: "2100",
-					},
-					{
-						Name:  "2116 - Team Building, Tools",
-						Value: "2116",
-					},
-					{
-						Name:  "2166 - Outreach, PyroTech",
-						Value: "2166",
-					},
-				},
-			},
-		},
 	},
 	{
 		Name:        "welcome",
@@ -105,15 +68,36 @@ func (b *Bot) RegisterHandlers() {
 }
 
 func (b *Bot) RegisterCommands() {
-
-	//cmdIDs := make(map[string]string, len(commands))
-
 	for _, cmd := range commands {
 		_, err := b.Session.ApplicationCommandCreate(b.ID, "", &cmd)
 		if err != nil {
 			log.Fatalf("Cannot create slash command %q: %v", cmd.Name, err)
 		}
+	}
 
-		//cmdIDs[rcmd.ID] = rcmd.Name
+	// storage is special since we're reading these choices from config
+	storageCommand := discordgo.ApplicationCommand{
+		Name:        "unlock-storage",
+		Description: "Generates a temporary code for a TFI storage unit",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:        "unit",
+				Type:        discordgo.ApplicationCommandOptionType(discordgo.StringSelectMenu),
+				Required:    true,
+				Description: "Which storage unit needs to be unlocked?",
+				Choices:     []*discordgo.ApplicationCommandOptionChoice{},
+			},
+		},
+	}
+	for _, lock := range b.IglooHomeClient.Locks {
+		storageCommand.Options[0].Choices = append(storageCommand.Options[0].Choices, &discordgo.ApplicationCommandOptionChoice{
+			Name:  lock["label"],
+			Value: lock["id"],
+		})
+		fmt.Println(lock)
+	}
+	_, err := b.Session.ApplicationCommandCreate(b.ID, "", &storageCommand)
+	if err != nil {
+		log.Fatalf("Cannot create slash command %q: %v", "unlock-storage", err)
 	}
 }

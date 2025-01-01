@@ -14,7 +14,7 @@ import (
 )
 
 type Client struct {
-	LockIDs                map[string]string
+	Locks                  []map[string]string
 	ApprovalEmail          string
 	ApprovalLink           string
 	AdditionalInstructions string
@@ -50,7 +50,7 @@ const tokenURL = "https://auth.igloohome.co/oauth2/token"
 const maxOTPVariances = 5
 const maxHourlyVariances = 3
 
-func NewClient(clientID, clientSecret string, locks map[string]string) *Client {
+func NewClient(clientID, clientSecret string, locks []map[string]string) *Client {
 	cc := clientcredentials.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -59,25 +59,21 @@ func NewClient(clientID, clientSecret string, locks map[string]string) *Client {
 	}
 	return &Client{
 		httpClient:     cc.Client(context.Background()),
-		LockIDs:        locks,
+		Locks:          locks,
 		hourlyVariance: make(map[string]int),
 		otpVariance:    make(map[string]int),
 	}
 }
 
 func (c *Client) GenerateOTP(lock, name string) (string, error) {
-	lockID, ok := c.LockIDs[lock]
-	if !ok {
-		return "", fmt.Errorf("no lock ID configured for %s", lock)
-	}
-	url := fmt.Sprintf(otpURLPattern, lockID)
+	url := fmt.Sprintf(otpURLPattern, lock)
 
 	// API requires minute and second to be truncated to 0
 	now := time.Now()
 	startDate := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
 
 	otpReq := OTPRequestBody{
-		Variance:   c.getOTPVariance(lockID),
+		Variance:   c.getOTPVariance(lock),
 		StartDate:  startDate.Format(time.RFC3339),
 		AccessName: name,
 	}
@@ -91,14 +87,11 @@ func (c *Client) GenerateHourly(lock, name string, duration time.Duration) (stri
 	startDate := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
 	endDate := startDate.Add(duration)
 
-	lockID, ok := c.LockIDs[lock]
-	if !ok {
-		return "", endDate, fmt.Errorf("no lock ID configured for %s", lock)
-	}
-	url := fmt.Sprintf(hourlyURLPattern, lockID)
+	url := fmt.Sprintf(hourlyURLPattern, lock)
+	fmt.Println(url)
 
 	otpReq := HourlyRequestBody{
-		Variance:   c.getHourlyVariance(lockID),
+		Variance:   c.getHourlyVariance(lock),
 		StartDate:  startDate.Format(time.RFC3339),
 		EndDate:    endDate.Format(time.RFC3339),
 		AccessName: name,

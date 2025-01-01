@@ -71,6 +71,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sendgrid/sendgrid-go v3.13.0+incompatible
 	github.com/spf13/viper v1.16.0
+	github.com/stripe/stripe-go/v79 v79.4.0
 	go.step.sm/crypto v0.35.0
 )
 

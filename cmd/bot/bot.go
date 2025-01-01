@@ -43,7 +43,9 @@ func main() {
 	}
 
 	// igloohome client
-	ih := igloohome.NewClient(viper.GetString("storage.clientId"), viper.GetString("storage.clientSecret"), viper.GetStringMapString("storage.locks"))
+	var locks []map[string]string
+	viper.UnmarshalKey("storage.locks", &locks)
+	ih := igloohome.NewClient(viper.GetString("storage.clientId"), viper.GetString("storage.clientSecret"), locks)
 	ih.ApprovalEmail = viper.GetString("storage.approvalEmail")
 	ih.ApprovalLink = viper.GetString("storage.approvalLink")
 	ih.AdditionalInstructions = viper.GetString("storage.additionalInstructions")
