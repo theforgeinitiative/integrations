@@ -17,7 +17,7 @@ var welcomeComponents = []discordgo.MessageComponent{
 	discordgo.ActionsRow{
 		Components: []discordgo.MessageComponent{
 			discordgo.Button{
-				Emoji: discordgo.ComponentEmoji{
+				Emoji: &discordgo.ComponentEmoji{
 					Name: "🔗",
 				},
 				Label:    "Link Membership",
@@ -29,7 +29,7 @@ var welcomeComponents = []discordgo.MessageComponent{
 	discordgo.ActionsRow{
 		Components: []discordgo.MessageComponent{
 			discordgo.Button{
-				Emoji: discordgo.ComponentEmoji{
+				Emoji: &discordgo.ComponentEmoji{
 					Name: "📱",
 				},
 				Label: "Member App",
@@ -37,7 +37,7 @@ var welcomeComponents = []discordgo.MessageComponent{
 				URL:   "https://app.theforgeinitiative.org",
 			},
 			discordgo.Button{
-				Emoji: discordgo.ComponentEmoji{
+				Emoji: &discordgo.ComponentEmoji{
 					Name: "🔍",
 				},
 				Label: "ID Recovery Form",
@@ -88,7 +88,7 @@ var Storage = []discordgo.MessageComponent{
 	discordgo.ActionsRow{
 		Components: []discordgo.MessageComponent{
 			discordgo.Button{
-				Emoji: discordgo.ComponentEmoji{
+				Emoji: &discordgo.ComponentEmoji{
 					Name: "🔗",
 				},
 				Label:    "Link Membership",
@@ -100,7 +100,7 @@ var Storage = []discordgo.MessageComponent{
 	discordgo.ActionsRow{
 		Components: []discordgo.MessageComponent{
 			discordgo.Button{
-				Emoji: discordgo.ComponentEmoji{
+				Emoji: &discordgo.ComponentEmoji{
 					Name: "📱",
 				},
 				Label: "Member App",
@@ -108,7 +108,7 @@ var Storage = []discordgo.MessageComponent{
 				URL:   "https://app.theforgeinitiative.org",
 			},
 			discordgo.Button{
-				Emoji: discordgo.ComponentEmoji{
+				Emoji: &discordgo.ComponentEmoji{
 					Name: "🔍",
 				},
 				Label: "ID Recovery Form",

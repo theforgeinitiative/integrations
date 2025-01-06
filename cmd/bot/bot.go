@@ -12,6 +12,7 @@ import (
 	"github.com/theforgeinitiative/integrations/groups"
 	"github.com/theforgeinitiative/integrations/igloohome"
 	"github.com/theforgeinitiative/integrations/mail"
+	"github.com/theforgeinitiative/integrations/mq"
 	"github.com/theforgeinitiative/integrations/sfdc"
 	"github.com/theforgeinitiative/integrations/sheetlog"
 )
@@ -59,6 +60,11 @@ func main() {
 	// email client
 	mc := mail.NewClient(viper.GetString("mail.apiKey"), viper.GetString("mail.fromName"), viper.GetString("mail.fromEmail"), viper.GetString("mail.fromEmail"))
 
+	// mqtt client
+	mq, err := mq.NewClient(viper.GetString("mqtt.broker"))
+	if err != nil {
+		log.Printf("MQTT Client err: %s", err)
+	}
 	// register handlers/commands
 	botClient := bot.Bot{
 		Session:         sess,
@@ -69,6 +75,7 @@ func main() {
 		IglooHomeClient: ih,
 		SheetLog:        &sl,
 		MailClient:      &mc,
+		MQClient:        &mq,
 	}
 
 	err = viper.UnmarshalKey("discord.guilds", &botClient.Guilds)

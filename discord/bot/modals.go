@@ -32,7 +32,7 @@ func (b *Bot) linkMembershipHadler(s *discordgo.Session, i *discordgo.Interactio
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						discordgo.Button{
-							Emoji: discordgo.ComponentEmoji{
+							Emoji: &discordgo.ComponentEmoji{
 								Name: "📱",
 							},
 							Label: "Member App",
@@ -40,7 +40,7 @@ func (b *Bot) linkMembershipHadler(s *discordgo.Session, i *discordgo.Interactio
 							URL:   "https://app.theforgeinitiative.org",
 						},
 						discordgo.Button{
-							Emoji: discordgo.ComponentEmoji{
+							Emoji: &discordgo.ComponentEmoji{
 								Name: "🔍",
 							},
 							Label: "ID Recovery Form",

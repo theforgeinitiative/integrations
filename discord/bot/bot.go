@@ -9,6 +9,7 @@ import (
 	"github.com/theforgeinitiative/integrations/groups"
 	"github.com/theforgeinitiative/integrations/igloohome"
 	"github.com/theforgeinitiative/integrations/mail"
+	"github.com/theforgeinitiative/integrations/mq"
 	"github.com/theforgeinitiative/integrations/sfdc"
 	"github.com/theforgeinitiative/integrations/sheetlog"
 )
@@ -23,6 +24,7 @@ type Bot struct {
 	IglooHomeClient *igloohome.Client
 	SheetLog        *sheetlog.Client
 	MailClient      *mail.Client
+	MQClient        *mq.Client
 }
 
 const unknownMemberErrorCode = 10007
@@ -35,6 +37,28 @@ var commands = []discordgo.ApplicationCommand{
 	{
 		Name:        "welcome",
 		Description: "Show welcome message with information about linking membership",
+	},
+	{
+		Name:        "letmein",
+		Description: "Rings the doorbell in the LOFT",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:        "door",
+				Type:        discordgo.ApplicationCommandOptionType(discordgo.StringSelectMenu),
+				Required:    true,
+				Description: "Which door are you at?",
+				Choices: []*discordgo.ApplicationCommandOptionChoice{
+					{
+						Name:  "Front Door",
+						Value: "front",
+					},
+					{
+						Name:  "Back Door",
+						Value: "back",
+					},
+				},
+			},
+		},
 	},
 }
 

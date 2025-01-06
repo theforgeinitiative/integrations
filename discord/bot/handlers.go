@@ -15,6 +15,10 @@ func (b *Bot) interactionHandler(s *discordgo.Session, i *discordgo.InteractionC
 			b.unlockStorageHandler(s, i)
 			return
 		}
+		if i.ApplicationCommandData().Name == "letmein" {
+			b.letmeinHandler(s, i)
+			return
+		}
 		if h, ok := commandsHandlers[i.ApplicationCommandData().Name]; ok {
 			h(s, i)
 		}
@@ -169,7 +173,7 @@ func (b *Bot) unlockStorageHandler(s *discordgo.Session, i *discordgo.Interactio
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						discordgo.Button{
-							Emoji: discordgo.ComponentEmoji{
+							Emoji: &discordgo.ComponentEmoji{
 								Name: "🔑",
 							},
 							Label:    "Request Access",
@@ -290,6 +294,30 @@ func (b *Bot) requestStorageHandler(s *discordgo.Session, i *discordgo.Interacti
 	s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
 		Content: ":thumbsup: Got it! Someone will review your storage access request soon.",
 		Flags:   discordgo.MessageFlagsEphemeral,
+	})
+}
+
+func (b *Bot) letmeinHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Working on it... :thinking:",
+			Flags:   discordgo.MessageFlagsEphemeral,
+		},
+	})
+
+	err := b.MQClient.RingDoorbell(i.ApplicationCommandData().Options[0].StringValue())
+	if err != nil {
+		log.Printf("Failed to publish doorbell message: %s", err)
+		msg := ":woozy_face: Oof! I encountered a problem requesting access. Please try again, but worst case you may have to ask someone to let you in the old fashioned way."
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &msg,
+		})
+		return
+	}
+	followup := "I rang the bell for you! Sit tight... :person_running_facing_right:"
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &followup,
 	})
 }
 

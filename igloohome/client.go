@@ -107,8 +107,6 @@ func (c *Client) getToken(url string, body any) (string, error) {
 		return "", fmt.Errorf("failed to build request body: %w", err)
 	}
 
-	fmt.Printf("%s", reqBody)
-
 	resp, err := c.httpClient.Post(url, "application/json", bytes.NewBuffer(reqBody))
 	if err != nil {
 		return "", fmt.Errorf("failed to request token: %w", err)
