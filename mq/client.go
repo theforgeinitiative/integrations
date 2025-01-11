@@ -1,7 +1,6 @@
 package mq
 
 import (
-	"fmt"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -20,12 +19,11 @@ func NewClient(broker string) (Client, error) {
 	opts.SetClientID(clientID)
 	opts.SetKeepAlive(60 * time.Second)
 	opts.SetPingTimeout(1 * time.Second)
+	opts.SetConnectTimeout(10 * time.Second)
 	opts.SetConnectRetry(true)
 
 	c := mqtt.NewClient(opts)
-	if token := c.Connect(); token.Wait() && token.Error() != nil {
-		return Client{}, fmt.Errorf("failed to connect to MQTT: %w", token.Error())
-	}
+	c.Connect()
 
 	return Client{c}, nil
 }

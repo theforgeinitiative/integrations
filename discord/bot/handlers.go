@@ -58,22 +58,24 @@ func (b *Bot) newMemberHandler(s *discordgo.Session, m *discordgo.GuildMemberAdd
 	// handle the case where the contact already exists
 	if err == nil {
 		for gName, guild := range b.Guilds {
-			err := s.GuildMemberRoleAdd(guild.ID, m.User.ID, guild.MemberRoleID)
-			restErr, ok := err.(*discordgo.RESTError)
-			// skip this guild if member isn't part of it
-			if ok && restErr.Message.Code == unknownMemberErrorCode {
-				continue
+			if len(guild.MemberRoleID) > 0 {
+				err := s.GuildMemberRoleAdd(guild.ID, m.User.ID, guild.MemberRoleID)
+				restErr, ok := err.(*discordgo.RESTError)
+				// skip this guild if member isn't part of it
+				if ok && restErr.Message.Code == unknownMemberErrorCode {
+					continue
+				}
+				if err != nil {
+					log.Printf("failed to add role for %s in guild %s: %s", memberAddDisplayName(m), gName, err)
+					return
+				}
+				log.Printf("Successfully added member role for %s in guild %s", memberAddDisplayName(m), gName)
+				err = s.GuildMemberNickname(guild.ID, m.User.ID, contact.DisplayName)
+				if err != nil {
+					log.Printf("failed to add role for %s in guild %s: %s", memberAddDisplayName(m), gName, err)
+				}
+				log.Printf("Successfully set nick for %s in guild %s", memberAddDisplayName(m), gName)
 			}
-			if err != nil {
-				log.Printf("failed to add role for %s in guild %s: %s", memberAddDisplayName(m), gName, err)
-				return
-			}
-			log.Printf("Successfully added member role for %s in guild %s", memberAddDisplayName(m), gName)
-			err = s.GuildMemberNickname(guild.ID, m.User.ID, contact.DisplayName)
-			if err != nil {
-				log.Printf("failed to add role for %s in guild %s: %s", memberAddDisplayName(m), gName, err)
-			}
-			log.Printf("Successfully set nick for %s in guild %s", memberAddDisplayName(m), gName)
 		}
 		_, err = s.ChannelMessageSend(welcomeChan, fmt.Sprintf("Welcome, <@%s>! You've already linked your membership, so you're good to go. :sunglasses:", m.User.ID))
 		if err != nil {
@@ -99,6 +101,15 @@ func (b *Bot) guildWelcomeChannel(g string) string {
 		}
 	}
 	return ""
+}
+
+func (b *Bot) guildDoorbellChannel(g string) string {
+	for _, guild := range b.Guilds {
+		if guild.ID == g {
+			return guild.DoorbellChannelID
+		}
+	}
+	return b.Guilds["tfi"].DoorbellChannelID
 }
 
 func memberDisplayName(m *discordgo.Member) string {
@@ -306,7 +317,16 @@ func (b *Bot) letmeinHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 		},
 	})
 
-	err := b.MQClient.RingDoorbell(i.ApplicationCommandData().Options[0].StringValue())
+	var uid string
+	if i.Member != nil {
+		uid = i.Member.User.ID
+	} else {
+		uid = i.User.ID
+	}
+
+	door := i.ApplicationCommandData().Options[0].StringValue()
+
+	err := b.MQClient.RingDoorbell(door)
 	if err != nil {
 		log.Printf("Failed to publish doorbell message: %s", err)
 		msg := ":woozy_face: Oof! I encountered a problem requesting access. Please try again, but worst case you may have to ask someone to let you in the old fashioned way."
@@ -319,6 +339,15 @@ func (b *Bot) letmeinHandler(s *discordgo.Session, i *discordgo.InteractionCreat
 	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &followup,
 	})
+
+	_, err = s.ChannelMessageSendComplex(b.guildDoorbellChannel(i.GuildID), &discordgo.MessageSend{
+		Content: fmt.Sprintf(`:bell: Hey everyone! <@%s> needs to be let in the %s door.`, uid, door),
+	})
+	if err != nil {
+		log.Printf("Failed to send doorbell message for %s", memberDisplayName(i.Member))
+	}
+
+	log.Printf("Rang the %s doorbell for %s", door, memberDisplayName(i.Member))
 }
 
 func (b *Bot) sendDM(uid, msg string) error {

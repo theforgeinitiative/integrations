@@ -66,20 +66,22 @@ func (b *Bot) linkMembershipHadler(s *discordgo.Session, i *discordgo.Interactio
 
 	// Set role
 	for gName, guild := range b.Guilds {
-		err := s.GuildMemberRoleAdd(guild.ID, i.Member.User.ID, guild.MemberRoleID)
-		restErr, ok := err.(*discordgo.RESTError)
-		// skip this guild if member isn't part of it
-		if ok && restErr.Message.Code == unknownMemberErrorCode {
-			continue
+		if len(guild.MemberRoleID) > 0 {
+			err := s.GuildMemberRoleAdd(guild.ID, i.Member.User.ID, guild.MemberRoleID)
+			restErr, ok := err.(*discordgo.RESTError)
+			// skip this guild if member isn't part of it
+			if ok && restErr.Message.Code == unknownMemberErrorCode {
+				continue
+			}
+			if err != nil {
+				s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+					Content: "I encountered an error trying to give you a role. Please try again.",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				})
+				return fmt.Errorf("failed to add role for %s in guild %s: %s", memberDisplayName(i.Member), gName, err)
+			}
+			log.Printf("Successfully added member role for %s in guild %s", memberDisplayName(i.Member), gName)
 		}
-		if err != nil {
-			s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
-				Content: "I encountered an error trying to give you a role. Please try again.",
-				Flags:   discordgo.MessageFlagsEphemeral,
-			})
-			return fmt.Errorf("failed to add role for %s in guild %s: %s", memberDisplayName(i.Member), gName, err)
-		}
-		log.Printf("Successfully added member role for %s in guild %s", memberDisplayName(i.Member), gName)
 	}
 
 	_, err = s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{

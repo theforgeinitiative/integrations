@@ -12,9 +12,10 @@ type Client struct {
 }
 
 type Guild struct {
-	ID               string `mapstructure:"id"`
-	MemberRoleID     string `mapstructure:"memberRole"`
-	WelcomeChannelID string `mapstructure:"welcomeChannel"`
+	ID                string `mapstructure:"id"`
+	MemberRoleID      string `mapstructure:"memberRole"`
+	WelcomeChannelID  string `mapstructure:"welcomeChannel"`
+	DoorbellChannelID string `mapstructure:"doorbellChannel"`
 }
 
 type Member struct {
@@ -96,6 +97,9 @@ func (c *Client) RemoveMemberRole(userID, guildName string) error {
 func (c *Client) HasMemberRole(member Member, guildName string) bool {
 	guild, ok := c.Guilds[guildName]
 	if !ok {
+		return false
+	}
+	if len(guild.MemberRoleID) == 0 {
 		return false
 	}
 	for _, r := range member.Roles {

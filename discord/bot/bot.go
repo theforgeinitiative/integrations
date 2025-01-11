@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -118,7 +117,6 @@ func (b *Bot) RegisterCommands() {
 			Name:  lock["label"],
 			Value: lock["id"],
 		})
-		fmt.Println(lock)
 	}
 	_, err := b.Session.ApplicationCommandCreate(b.ID, "", &storageCommand)
 	if err != nil {
