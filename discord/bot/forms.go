@@ -83,38 +83,3 @@ var membershipForm = discordgo.InteractionResponse{
 		},
 	},
 }
-
-var Storage = []discordgo.MessageComponent{
-	discordgo.ActionsRow{
-		Components: []discordgo.MessageComponent{
-			discordgo.Button{
-				Emoji: &discordgo.ComponentEmoji{
-					Name: "🔗",
-				},
-				Label:    "Link Membership",
-				Style:    discordgo.PrimaryButton,
-				CustomID: "show_link_form",
-			},
-		},
-	},
-	discordgo.ActionsRow{
-		Components: []discordgo.MessageComponent{
-			discordgo.Button{
-				Emoji: &discordgo.ComponentEmoji{
-					Name: "📱",
-				},
-				Label: "Member App",
-				Style: discordgo.LinkButton,
-				URL:   "https://app.theforgeinitiative.org",
-			},
-			discordgo.Button{
-				Emoji: &discordgo.ComponentEmoji{
-					Name: "🔍",
-				},
-				Label: "ID Recovery Form",
-				Style: discordgo.LinkButton,
-				URL:   "https://www.tfaforms.com/4764292",
-			},
-		},
-	},
-}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/theforgeinitiative/integrations/discord"
+	"github.com/theforgeinitiative/integrations/discord/bot/storage"
 	"github.com/theforgeinitiative/integrations/groups"
 	"github.com/theforgeinitiative/integrations/igloohome"
 	"github.com/theforgeinitiative/integrations/mail"
@@ -24,6 +25,7 @@ type Bot struct {
 	SheetLog        *sheetlog.Client
 	MailClient      *mail.Client
 	MQClient        *mq.Client
+	StorageHandler  *storage.StorageHandler
 }
 
 const unknownMemberErrorCode = 10007
@@ -98,28 +100,8 @@ func (b *Bot) RegisterCommands() {
 		}
 	}
 
-	// storage is special since we're reading these choices from config
-	storageCommand := discordgo.ApplicationCommand{
-		Name:        "unlock-storage",
-		Description: "Generates a temporary code for a TFI storage unit",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Name:        "unit",
-				Type:        discordgo.ApplicationCommandOptionType(discordgo.StringSelectMenu),
-				Required:    true,
-				Description: "Which storage unit needs to be unlocked?",
-				Choices:     []*discordgo.ApplicationCommandOptionChoice{},
-			},
-		},
-	}
-	for _, lock := range b.IglooHomeClient.Locks {
-		storageCommand.Options[0].Choices = append(storageCommand.Options[0].Choices, &discordgo.ApplicationCommandOptionChoice{
-			Name:  lock["label"],
-			Value: lock["id"],
-		})
-	}
-	_, err := b.Session.ApplicationCommandCreate(b.ID, "", &storageCommand)
-	if err != nil {
+	// Register storage command via StorageHandler
+	if err := b.StorageHandler.RegisterCommand(b.Session, b.ID); err != nil {
 		log.Fatalf("Cannot create slash command %q: %v", "unlock-storage", err)
 	}
 }

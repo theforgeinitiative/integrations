@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/theforgeinitiative/integrations/config"
 	"github.com/theforgeinitiative/integrations/discord/bot"
+	"github.com/theforgeinitiative/integrations/discord/bot/storage"
 	"github.com/theforgeinitiative/integrations/groups"
 	"github.com/theforgeinitiative/integrations/igloohome"
 	"github.com/theforgeinitiative/integrations/mail"
@@ -76,6 +77,16 @@ func main() {
 		SheetLog:        &sl,
 		MailClient:      &mc,
 		MQClient:        &mq,
+	}
+
+	// Initialize StorageHandler
+	botClient.StorageHandler = &storage.StorageHandler{
+		SFClient:        &sfClient,
+		Campaigns:       botClient.Campaigns,
+		IglooHomeClient: ih,
+		SheetLog:        &sl,
+		MailClient:      &mc,
+		// You may need to convert botClient.Guilds to the expected type if necessary
 	}
 
 	err = viper.UnmarshalKey("discord.guilds", &botClient.Guilds)
