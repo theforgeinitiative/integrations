@@ -14,10 +14,6 @@ func (b *Bot) interactionHandler(s *discordgo.Session, i *discordgo.InteractionC
 			b.StorageHandler.UnlockStorage(s, i)
 			return
 		}
-		if i.ApplicationCommandData().Name == "letmein" {
-			b.letmeinHandler(s, i)
-			return
-		}
 		if h, ok := commandsHandlers[i.ApplicationCommandData().Name]; ok {
 			h(s, i)
 		}
@@ -129,48 +125,6 @@ func memberAddDisplayName(m *discordgo.GuildMemberAdd) string {
 		return m.User.GlobalName
 	}
 	return m.User.Username
-}
-
-func (b *Bot) letmeinHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: "Working on it... :thinking:",
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
-
-	var uid string
-	if i.Member != nil {
-		uid = i.Member.User.ID
-	} else {
-		uid = i.User.ID
-	}
-
-	door := i.ApplicationCommandData().Options[0].StringValue()
-
-	err := b.MQClient.RingDoorbell(door)
-	if err != nil {
-		log.Printf("Failed to publish doorbell message: %s", err)
-		msg := ":woozy_face: Oof! I encountered a problem requesting access. Please try again, but worst case you may have to ask someone to let you in the old fashioned way."
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-			Content: &msg,
-		})
-		return
-	}
-	followup := "I rang the bell for you! Sit tight... :person_running_facing_right:"
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: &followup,
-	})
-
-	_, err = s.ChannelMessageSendComplex(b.guildDoorbellChannel(i.GuildID), &discordgo.MessageSend{
-		Content: fmt.Sprintf(`:bell: Hey everyone! <@%s> needs to be let in the %s door.`, uid, door),
-	})
-	if err != nil {
-		log.Printf("Failed to send doorbell message for %s", memberDisplayName(i.Member))
-	}
-
-	log.Printf("Rang the %s doorbell for %s", door, memberDisplayName(i.Member))
 }
 
 func (b *Bot) sendDM(uid, msg string) error {
